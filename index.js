@@ -7,15 +7,13 @@ const routes = require('./routes');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// =========================
 // 测试 Supabase 连接
+// =========================
 (async () => {
   try {
     const { data, error } = await supabase.from('_test').select('*').limit(1);
-    if (error && error.code !== 'PGRST204') {
-      console.log('Supabase 连接成功');
-    } else {
-      console.log('Supabase 连接成功');
-    }
+    console.log('Supabase 连接成功');
   } catch (err) {
     console.error('Supabase 连接失败:', err.message);
   }
@@ -25,14 +23,19 @@ const PORT = process.env.PORT || 3000;
 // CORS 配置
 // =========================
 const allowedOrigins = process.env.NODE_ENV === 'production'
-  ? ['https://admin-web-one-green.vercel.app'] // 生产前端域名
+  ? ['https://admin-web-one-green.vercel.app']   // 生产前端域名
   : ['http://localhost:5173', 'http://127.0.0.1:5173']; // 开发前端域名
 
-app.use(cors({
+const corsOptions = {
   origin: allowedOrigins,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  credentials: true, // 允许前端发送 cookie
-}));
+  credentials: true, // 允许发送 cookie
+};
+
+app.use(cors(corsOptions));
+
+// 显式处理所有 OPTIONS 请求（预检）
+app.options('*', cors(corsOptions));
 
 // =========================
 // 中间件
