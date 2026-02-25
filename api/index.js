@@ -1,18 +1,18 @@
 const express = require("express");
 const { createClient } = require("@supabase/supabase-js");
+const routes = require("../routes/index"); // 导入原有路由
 
 const app = express();
 app.use(express.json());
 
-// Supabase 客户端
+// Supabase
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-// 导入路由
-const routes = require("../routes/index");
+// 挂载路由
 app.use("/api", routes);
 
-// Vercel Serverless 导出
+// 必须导出 app，不能 app.listen
 module.exports = app;
