@@ -32,10 +32,10 @@ const corsOptions = {
   credentials: true, // 允许发送 cookie
 };
 
+// 全局 CORS 中间件
 app.use(cors(corsOptions));
 
-// 显式处理所有 OPTIONS 请求（预检）
-app.options('*', cors(corsOptions));
+// Express 会自动处理 OPTIONS 预检请求，无需再写 app.options('*', ...)
 
 // =========================
 // 中间件
