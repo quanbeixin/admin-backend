@@ -1,6 +1,5 @@
 require('dotenv').config();
 const express = require('express');
-const cors = require('cors');
 const supabase = require('./config/supabase');
 const routes = require('./routes');
 
@@ -20,22 +19,28 @@ const PORT = process.env.PORT || 3000;
 })();
 
 // =========================
-// CORS 配置
+// 自定义 CORS 中间件
 // =========================
 const allowedOrigins = process.env.NODE_ENV === 'production'
   ? ['https://admin-web-one-green.vercel.app']   // 生产前端域名
   : ['http://localhost:5173', 'http://127.0.0.1:5173']; // 开发前端域名
 
-const corsOptions = {
-  origin: allowedOrigins,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  credentials: true, // 允许发送 cookie
-};
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+    res.setHeader('Access-Control-Allow-Credentials', 'true'); // 允许 cookie/token
+  }
 
-// 全局 CORS 中间件
-app.use(cors(corsOptions));
+  // OPTIONS 预检请求直接返回 200
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
 
-// Express 会自动处理 OPTIONS 预检请求，无需再写 app.options('*', ...)
+  next();
+});
 
 // =========================
 // 中间件
