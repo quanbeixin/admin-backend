@@ -12,7 +12,7 @@ const supabase = createClient(
 );
 
 // 挂载路由
-app.use("/api", routes);
+app.use("/", routes);
 
 // 必须导出 app，不能 app.listen
 module.exports = app;
