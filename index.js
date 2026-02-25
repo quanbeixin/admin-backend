@@ -4,14 +4,13 @@ const supabase = require('./config/supabase');
 const routes = require('./routes');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
 
 // =========================
 // 测试 Supabase 连接
 // =========================
 (async () => {
   try {
-    const { data, error } = await supabase.from('_test').select('*').limit(1);
+    const { data } = await supabase.from('_test').select('*').limit(1);
     console.log('Supabase 连接成功');
   } catch (err) {
     console.error('Supabase 连接失败:', err.message);
@@ -22,7 +21,7 @@ const PORT = process.env.PORT || 3000;
 // 自定义 CORS 中间件
 // =========================
 const allowedOrigins = process.env.NODE_ENV === 'production'
-  ? ['https://admin-web-one-green.vercel.app']   // 生产前端域名
+  ? ['https://admin-web-one-green.vercel.app'] // 生产前端域名
   : ['http://localhost:5173', 'http://127.0.0.1:5173']; // 开发前端域名
 
 app.use((req, res, next) => {
@@ -31,12 +30,12 @@ app.use((req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', origin);
     res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
-    res.setHeader('Access-Control-Allow-Credentials', 'true'); // 允许 cookie/token
+    res.setHeader('Access-Control-Allow-Credentials', 'true'); // 支持 cookie/token
   }
 
-  // OPTIONS 预检请求直接返回 200
+  // OPTIONS 预检请求直接返回 200 并结束
   if (req.method === 'OPTIONS') {
-    return res.sendStatus(200);
+    return res.status(200).end();
   }
 
   next();
@@ -77,11 +76,17 @@ app.use((err, req, res, next) => {
 });
 
 // =========================
-// 启动服务器
+// 启动服务器（仅本地开发用）
 // =========================
-app.listen(PORT, () => {
-  console.log(`服务器运行在 http://localhost:${PORT}`);
-  console.log(`环境: ${process.env.NODE_ENV || 'development'}`);
-});
+if (process.env.NODE_ENV !== 'production') {
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, () => {
+    console.log(`服务器运行在 http://localhost:${PORT}`);
+    console.log(`环境: ${process.env.NODE_ENV || 'development'}`);
+  });
+}
 
-module.exports = { app, supabase };
+// =========================
+// Vercel Serverless 入口
+// =========================
+module.exports = app;

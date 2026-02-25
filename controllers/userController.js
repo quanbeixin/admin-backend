@@ -129,7 +129,7 @@ exports.login = async (req, res) => {
   try {
     const { username, password } = req.body;
 
-    // 验证必填字段
+    // 必填校验
     if (!username || !password) {
       return res.status(400).json({
         success: false,
@@ -151,7 +151,7 @@ exports.login = async (req, res) => {
       });
     }
 
-    // 验证密码
+    // 验证密码（明文，后续可以加 bcrypt）
     if (data.password !== password) {
       return res.status(401).json({
         success: false,
@@ -163,24 +163,26 @@ exports.login = async (req, res) => {
     const token = jwt.sign(
       {
         id: data.id,
-        uuid: data.uuid,
-        username: data.username
+        username: data.username,
+        uuid: data.uuid
       },
       process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRES_IN || '24h' }
     );
 
-    // 登录成功，返回用户信息和 token（不包含密码）
+    // 返回用户信息（不包含密码）和 token
     const { password: _, ...userInfo } = data;
 
-    res.json({
+    // **关键：return 确保 Vercel Serverless 响应完整**
+    return res.status(200).json({
       success: true,
       message: '登录成功',
       data: userInfo,
       token: token
     });
   } catch (error) {
-    res.status(500).json({
+    console.error('登录错误:', error);
+    return res.status(500).json({
       success: false,
       message: '登录失败',
       error: error.message
