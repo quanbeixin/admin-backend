@@ -9,7 +9,7 @@ const departmentRoutes = require('./departments');
 router.get('/health', apiController.healthCheck);
 
 // API 欢迎信息
-router.get('/api', apiController.welcome);
+// router.get('/api', apiController.welcome);
 
 // 数据库连接测试
 router.get('/db-test', apiController.dbTest);
