@@ -21,16 +21,34 @@ const PORT = process.env.PORT || 3000;
   }
 })();
 
+// =========================
+// CORS 配置
+// =========================
+const allowedOrigins = process.env.NODE_ENV === 'production'
+  ? ['https://admin-web-one-green.vercel.app'] // 生产前端域名
+  : ['http://localhost:5173', 'http://127.0.0.1:5173']; // 开发前端域名
+
+app.use(cors({
+  origin: allowedOrigins,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  credentials: true, // 允许前端发送 cookie
+}));
+
+// =========================
 // 中间件
-app.use(cors());
+// =========================
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// =========================
 // 路由
+// =========================
 app.use('/', routes);
 console.log('路由已加载');
 
+// =========================
 // 404 处理
+// =========================
 app.use((req, res) => {
   res.status(404).json({
     success: false,
@@ -38,7 +56,9 @@ app.use((req, res) => {
   });
 });
 
+// =========================
 // 错误处理中间件
+// =========================
 app.use((err, req, res, next) => {
   console.error('服务器错误:', err.stack);
   res.status(500).json({
@@ -48,7 +68,9 @@ app.use((err, req, res, next) => {
   });
 });
 
+// =========================
 // 启动服务器
+// =========================
 app.listen(PORT, () => {
   console.log(`服务器运行在 http://localhost:${PORT}`);
   console.log(`环境: ${process.env.NODE_ENV || 'development'}`);
