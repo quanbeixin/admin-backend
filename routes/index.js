@@ -25,6 +25,6 @@ router.use('/tasks', taskRoutes);
 router.use('/departments', departmentRoutes);
 
 // 仪表盘相关路由
-router.use('/api/dashboards', dashboardRoutes);
+router.use('/dashboards', dashboardRoutes);
 
 module.exports = router;

@@ -50,7 +50,7 @@ app.use(express.urlencoded({ extended: true }));
 // =========================
 // 路由
 // =========================
-app.use('/', routes);
+app.use('/api', routes);
 console.log('路由已加载');
 
 // =========================
