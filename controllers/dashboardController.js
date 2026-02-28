@@ -143,11 +143,20 @@ exports.deleteDashboard = async (req, res) => {
 exports.getFields = async (req, res) => {
   try {
     const fields = [
-      { key: 'id', label: 'ID', type: 'number' },
-      { key: 'name', label: '仪表盘名称', type: 'string' },
-      { key: 'description', label: '描述', type: 'string' },
-      { key: 'created_at', label: '创建时间', type: 'datetime' },
-      { key: 'updated_at', label: '更新时间', type: 'datetime' }
+      { name: 'report_date', label: '统计日期', type: 'date' },
+      { name: 'ad_id', label: '广告ID', type: 'string' },
+      { name: 'campaign_name', label: '广告系列名称', type: 'string' },
+      { name: 'spent_amount', label: '已花金额', type: 'number' },
+      { name: 'impressions', label: '展示次数', type: 'number' },
+      { name: 'cpm', label: '千次展示费用', type: 'number' },
+      { name: 'clicks', label: '点击量', type: 'number' },
+      { name: 'ctr', label: '点击率', type: 'number' },
+      { name: 'cpc', label: '单次点击费用', type: 'number' },
+      { name: 'installs', label: '应用安装', type: 'number' },
+      { name: 'cpi', label: '单次安装费用', type: 'number' },
+      { name: 'subscriptions', label: '订阅次数', type: 'number' },
+      { name: 'cps', label: '单次订阅费用', type: 'number' },
+      { name: 'video_play_3s', label: '3秒视频播放', type: 'number' }
     ];
 
     res.json({
