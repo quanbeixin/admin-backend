@@ -4,6 +4,7 @@ const apiController = require('../controllers/apiController');
 const userRoutes = require('./users');
 const taskRoutes = require('./tasks');
 const departmentRoutes = require('./departments');
+const dashboardRoutes = require('./dashboards');
 
 // 健康检查
 router.get('/health', apiController.healthCheck);
@@ -22,5 +23,8 @@ router.use('/tasks', taskRoutes);
 
 // 部门相关路由
 router.use('/departments', departmentRoutes);
+
+// 仪表盘相关路由
+router.use('/api/dashboards', dashboardRoutes);
 
 module.exports = router;
