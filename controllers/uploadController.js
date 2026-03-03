@@ -5,6 +5,14 @@ const { uploadToOSS } = require('../config/oss');
 // 注意：在Vercel Serverless环境中，不需要创建本地目录
 // multer会使用/tmp目录存储临时文件
 
+// 生成安全的文件名（避免中文编码问题）
+function generateSafeFilename(originalname) {
+  const ext = path.extname(originalname);
+  const timestamp = Date.now();
+  const random = Math.round(Math.random() * 1E9);
+  return `${timestamp}_${random}${ext}`;
+}
+
 // 文件上传处理
 exports.uploadFile = async (req, res) => {
   try {
@@ -23,8 +31,9 @@ exports.uploadFile = async (req, res) => {
     console.log('文件路径:', req.file.path);
     console.log('原始文件名:', req.file.originalname);
 
-    // 上传到 OSS
-    const ossPath = `uploads/${Date.now()}_${req.file.originalname}`;
+    // 生成安全的文件名（避免中文编码问题）
+    const safeFilename = generateSafeFilename(req.file.originalname);
+    const ossPath = `uploads/${safeFilename}`;
     console.log('OSS路径:', ossPath);
 
     const ossUrl = await uploadToOSS(ossPath, req.file.path);
@@ -41,7 +50,7 @@ exports.uploadFile = async (req, res) => {
     res.json({
       success: true,
       data: {
-        filename: req.file.filename,
+        filename: safeFilename,
         originalname: req.file.originalname,
         size: req.file.size,
         mimetype: req.file.mimetype,
