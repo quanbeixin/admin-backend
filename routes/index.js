@@ -6,6 +6,11 @@ const taskRoutes = require('./tasks');
 const departmentRoutes = require('./departments');
 const dashboardRoutes = require('./dashboards');
 const adReportRoutes = require('./adReports');
+const adCreativeRoutes = require('./adCreatives');
+const uploadRoutes = require('./upload');
+const optionFieldRoutes = require('./optionFields');
+const testCaseRoutes = require('./testCases');
+const testRoutes = require('./test');
 
 // 健康检查
 router.get('/health', apiController.healthCheck);
@@ -30,5 +35,20 @@ router.use('/dashboards', dashboardRoutes);
 
 // 广告数据相关路由
 router.use('/ad-reports', adReportRoutes);
+
+// 广告创意相关路由
+router.use('/ad-creatives', adCreativeRoutes);
+
+// 文件上传相关路由
+router.use('/upload', uploadRoutes);
+
+// 选型字段相关路由
+router.use('/option-fields', optionFieldRoutes);
+
+// 测试用例相关路由
+router.use('/test-cases', testCaseRoutes);
+
+// 测试执行相关路由
+router.use('/test', testRoutes);
 
 module.exports = router;

@@ -1,0 +1,54 @@
+[
+  {
+    "step_order": 1,
+    "action": "goto",
+    "value": "http://localhost:5173/login",
+    "selector": null,
+    "description": "访问登录页面"
+  },
+  {
+    "step_order": 2,
+    "action": "waitForSelector",
+    "selector": "#login_username",
+    "value": null,
+    "state": "visible",
+    "timeout": 10000,
+    "description": "等待用户名输入框出现"
+  },
+  {
+    "step_order": 3,
+    "action": "fill",
+    "selector": "#login_username",
+    "value": "kk",
+    "description": "填写用户名"
+  },
+  {
+    "step_order": 4,
+    "action": "fill",
+    "selector": "#login_password",
+    "value": "123456",
+    "description": "填写密码"
+  },
+  {
+    "step_order": 5,
+    "action": "click",
+    "selector": "#loginBtn",
+    "value": null,
+    "description": "点击登录按钮"
+  },
+  {
+    "step_order": 6,
+    "action": "wait",
+    "value": "2000",
+    "selector": null,
+    "description": "等待2秒让登录请求完成"
+  },
+  {
+    "step_order": 7,
+    "action": "waitForURL",
+    "value": "http://localhost:5173/workbench",
+    "selector": null,
+    "timeout": 10000,
+    "description": "验证跳转到工作台页面"
+  }
+]

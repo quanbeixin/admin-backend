@@ -1,5 +1,6 @@
 require('dotenv').config();
 const express = require('express');
+const path = require('path');
 const supabase = require('./config/supabase');
 const routes = require('./routes');
 
@@ -46,6 +47,9 @@ app.use((req, res, next) => {
 // =========================
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// 静态文件服务 - 提供上传文件访问
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // =========================
 // 路由
