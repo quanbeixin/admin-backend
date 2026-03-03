@@ -11,6 +11,7 @@ const uploadRoutes = require('./upload');
 const optionFieldRoutes = require('./optionFields');
 const testCaseRoutes = require('./testCases');
 const testRoutes = require('./test');
+const stsRoutes = require('./sts');
 
 // 健康检查
 router.get('/health', apiController.healthCheck);
@@ -41,6 +42,9 @@ router.use('/ad-creatives', adCreativeRoutes);
 
 // 文件上传相关路由
 router.use('/upload', uploadRoutes);
+
+// OSS STS临时授权路由
+router.use('/oss', stsRoutes);
 
 // 选型字段相关路由
 router.use('/option-fields', optionFieldRoutes);
