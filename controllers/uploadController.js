@@ -2,11 +2,8 @@ const path = require('path');
 const fs = require('fs');
 const { uploadToOSS } = require('../config/oss');
 
-// 确保上传目录存在
-const uploadDir = path.join(__dirname, '../uploads');
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
+// 注意：在Vercel Serverless环境中，不需要创建本地目录
+// multer会使用/tmp目录存储临时文件
 
 // 文件上传处理
 exports.uploadFile = async (req, res) => {
@@ -23,7 +20,11 @@ exports.uploadFile = async (req, res) => {
     const ossUrl = await uploadToOSS(ossPath, req.file.path);
 
     // 删除本地临时文件
-    fs.unlinkSync(req.file.path);
+    try {
+      fs.unlinkSync(req.file.path);
+    } catch (err) {
+      console.warn('删除临时文件失败:', err.message);
+    }
 
     res.json({
       success: true,

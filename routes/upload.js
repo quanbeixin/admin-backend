@@ -2,13 +2,22 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
 const uploadController = require('../controllers/uploadController');
 const { verifyToken } = require('../middleware/auth');
 
 // 配置 multer 存储
+// 在Vercel Serverless环境中使用/tmp目录，本地开发使用uploads目录
+const uploadDir = process.env.VERCEL ? '/tmp' : path.join(__dirname, '../uploads');
+
+// 确保本地开发环境的uploads目录存在
+if (!process.env.VERCEL && !fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, path.join(__dirname, '../uploads'));
+    cb(null, uploadDir);
   },
   filename: function (req, file, cb) {
     // 生成唯一文件名：时间戳-随机数-原始文件名
