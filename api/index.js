@@ -14,20 +14,27 @@ const allowedOrigins = [
 app.use((req, res, next) => {
   const origin = req.headers.origin;
 
-  // 如果请求来源在允许列表中，设置CORS头
-  if (allowedOrigins.includes(origin)) {
+  console.log('收到请求:', req.method, req.path, '来源:', origin);
+
+  // 设置CORS头 - 无论origin是否在列表中都设置
+  if (origin && allowedOrigins.includes(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+  } else if (origin) {
+    // 即使不在列表中，也设置头以便调试
+    console.log('警告: 未授权的来源:', origin);
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
   }
 
-  // 设置其他CORS头
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS,PATCH');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-Requested-With');
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Max-Age', '86400'); // 预检请求缓存24小时
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-Requested-With,Accept');
+  res.setHeader('Access-Control-Max-Age', '86400');
 
   // 处理OPTIONS预检请求
   if (req.method === 'OPTIONS') {
-    return res.status(200).end();
+    console.log('处理OPTIONS预检请求');
+    return res.status(204).end();
   }
 
   next();
