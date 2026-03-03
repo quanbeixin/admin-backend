@@ -8,20 +8,32 @@ const { uploadToOSS } = require('../config/oss');
 // 文件上传处理
 exports.uploadFile = async (req, res) => {
   try {
+    console.log('收到文件上传请求');
+    console.log('req.file:', req.file);
+
     if (!req.file) {
+      console.log('错误: 没有上传文件');
       return res.status(400).json({
         success: false,
         message: '没有上传文件'
       });
     }
 
+    console.log('开始上传到OSS...');
+    console.log('文件路径:', req.file.path);
+    console.log('原始文件名:', req.file.originalname);
+
     // 上传到 OSS
     const ossPath = `uploads/${Date.now()}_${req.file.originalname}`;
+    console.log('OSS路径:', ossPath);
+
     const ossUrl = await uploadToOSS(ossPath, req.file.path);
+    console.log('OSS上传成功，URL:', ossUrl);
 
     // 删除本地临时文件
     try {
       fs.unlinkSync(req.file.path);
+      console.log('临时文件已删除');
     } catch (err) {
       console.warn('删除临时文件失败:', err.message);
     }
@@ -39,10 +51,12 @@ exports.uploadFile = async (req, res) => {
     });
   } catch (error) {
     console.error('文件上传错误:', error);
+    console.error('错误堆栈:', error.stack);
     res.status(500).json({
       success: false,
       message: '文件上传失败',
-      error: error.message
+      error: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 };
