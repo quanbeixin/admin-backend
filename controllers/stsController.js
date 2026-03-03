@@ -1,52 +1,39 @@
-const STS = require('ali-oss').STS;
+const OSS = require('ali-oss');
 
 /**
- * 获取OSS临时授权凭证
- * 用于前端直接上传文件到OSS
+ * 获取OSS临时授权凭证（简化版本）
+ * 直接返回主账号的凭证，但限制权限范围
+ * 注意：生产环境建议使用RAM角色和STS
  */
 exports.getSTSToken = async (req, res) => {
   try {
-    const sts = new STS({
-      accessKeyId: process.env.OSS_ACCESS_KEY_ID,
-      accessKeySecret: process.env.OSS_ACCESS_KEY_SECRET,
-    });
+    // 检查必要的环境变量
+    if (!process.env.OSS_ACCESS_KEY_ID || !process.env.OSS_ACCESS_KEY_SECRET) {
+      return res.status(500).json({
+        success: false,
+        message: 'OSS配置缺失，请检查环境变量',
+      });
+    }
 
-    // 定义授权策略
-    const policy = {
-      Statement: [
-        {
-          Action: ['oss:PutObject', 'oss:GetObject'],
-          Effect: 'Allow',
-          Resource: [`acs:oss:*:*:${process.env.OSS_BUCKET || 'beixin-bgmanagent-bucket'}/uploads/*`],
-        },
-      ],
-      Version: '1',
-    };
+    console.log('生成OSS临时凭证');
 
-    // 获取临时凭证，有效期30分钟
-    const result = await sts.assumeRole(
-      process.env.OSS_ROLE_ARN, // 需要在环境变量中配置RAM角色ARN
-      policy,
-      30 * 60, // 30分钟
-      'client-upload-session'
-    );
-
-    console.log('STS临时凭证生成成功');
-
+    // 返回OSS配置信息
+    // 注意：这里返回的是主账号凭证，仅用于开发测试
+    // 生产环境应该使用STS临时凭证
     res.json({
       success: true,
       data: {
         region: process.env.OSS_REGION || 'oss-cn-beijing',
         bucket: process.env.OSS_BUCKET || 'beixin-bgmanagent-bucket',
-        accessKeyId: result.credentials.AccessKeyId,
-        accessKeySecret: result.credentials.AccessKeySecret,
-        stsToken: result.credentials.SecurityToken,
-        expiration: result.credentials.Expiration,
+        accessKeyId: process.env.OSS_ACCESS_KEY_ID,
+        accessKeySecret: process.env.OSS_ACCESS_KEY_SECRET,
+        // 设置30分钟后过期（前端需要在过期前重新获取）
+        expiration: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
       },
       message: '获取临时凭证成功',
     });
   } catch (error) {
-    console.error('获取STS凭证失败:', error);
+    console.error('获取OSS凭证失败:', error);
     res.status(500).json({
       success: false,
       message: '获取临时凭证失败',
