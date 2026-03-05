@@ -8,10 +8,13 @@ const dashboardRoutes = require('./dashboards');
 const adReportRoutes = require('./adReports');
 const adCreativeRoutes = require('./adCreatives');
 const uploadRoutes = require('./upload');
-const optionFieldRoutes = require('./optionFields');
 const testCaseRoutes = require('./testCases');
 const testRoutes = require('./test');
 const stsRoutes = require('./sts');
+const fieldGroupRoutes = require('./fieldGroups');
+const fieldDefinitionRoutes = require('./fieldDefinitions');
+const fieldOptionRoutes = require('./fieldOptions');
+const fieldConfigRoutes = require('./fieldConfig');
 
 // 健康检查
 router.get('/health', apiController.healthCheck);
@@ -46,13 +49,22 @@ router.use('/upload', uploadRoutes);
 // OSS STS临时授权路由
 router.use('/oss', stsRoutes);
 
-// 选型字段相关路由
-router.use('/option-fields', optionFieldRoutes);
-
 // 测试用例相关路由
 router.use('/test-cases', testCaseRoutes);
 
 // 测试执行相关路由
 router.use('/test', testRoutes);
+
+// 字段分组相关路由
+router.use('/field-groups', fieldGroupRoutes);
+
+// 字段定义相关路由
+router.use('/field-definitions', fieldDefinitionRoutes);
+
+// 字段选项相关路由
+router.use('/field-options', fieldOptionRoutes);
+
+// 字段配置相关路由（树形结构、关联查询等）
+router.use('/field-config', fieldConfigRoutes);
 
 module.exports = router;

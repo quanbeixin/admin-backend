@@ -1,19 +1,20 @@
 const supabase = require('../config/supabase');
 
-// 获取选型字段列表（支持分页和筛选）
-exports.getOptionFields = async (req, res) => {
+// 获取字段选项列表（支持分页和筛选）
+exports.getFieldOptions = async (req, res) => {
   try {
     const {
       page = 1,
       limit = 20,
       field_name,
+      option_value,
       is_active
     } = req.query;
 
     const offset = (page - 1) * limit;
 
     let query = supabase
-      .from('ad_option_fields')
+      .from('field_options')
       .select('*', { count: 'exact' })
       .order('field_name', { ascending: true })
       .order('sort_order', { ascending: true });
@@ -21,6 +22,9 @@ exports.getOptionFields = async (req, res) => {
     // 筛选条件
     if (field_name) {
       query = query.eq('field_name', field_name);
+    }
+    if (option_value) {
+      query = query.ilike('option_value', `%${option_value}%`);
     }
     if (is_active !== undefined) {
       query = query.eq('is_active', is_active === 'true');
@@ -45,22 +49,58 @@ exports.getOptionFields = async (req, res) => {
       message: '获取成功'
     });
   } catch (error) {
-    console.error('获取选型字段列表错误:', error);
+    console.error('获取字段选项列表错误:', error);
     res.status(500).json({
       success: false,
-      message: '获取选型字段列表失败',
+      message: '获取字段选项列表失败',
       error: error.message
     });
   }
 };
 
-// 获取单个选型字段
-exports.getOptionFieldById = async (req, res) => {
+// 获取某字段的所有选项（通过 field_code）
+exports.getOptionsByFieldCode = async (req, res) => {
+  try {
+    const { fieldCode } = req.params;
+    const { is_active } = req.query;
+
+    let query = supabase
+      .from('field_options')
+      .select('*')
+      .eq('field_name', fieldCode)
+      .order('sort_order', { ascending: true });
+
+    // 筛选条件
+    if (is_active !== undefined) {
+      query = query.eq('is_active', is_active === 'true');
+    }
+
+    const { data, error } = await query;
+
+    if (error) throw error;
+
+    res.json({
+      success: true,
+      data: data,
+      message: '获取成功'
+    });
+  } catch (error) {
+    console.error('获取字段选项错误:', error);
+    res.status(500).json({
+      success: false,
+      message: '获取字段选项失败',
+      error: error.message
+    });
+  }
+};
+
+// 获取单个字段选项
+exports.getFieldOptionById = async (req, res) => {
   try {
     const { id } = req.params;
 
     const { data, error } = await supabase
-      .from('ad_option_fields')
+      .from('field_options')
       .select('*')
       .eq('id', id)
       .single();
@@ -69,7 +109,7 @@ exports.getOptionFieldById = async (req, res) => {
       if (error.code === 'PGRST116') {
         return res.status(404).json({
           success: false,
-          message: '选型字段不存在'
+          message: '字段选项不存在'
         });
       }
       throw error;
@@ -83,24 +123,21 @@ exports.getOptionFieldById = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: '获取选型字段失败',
+      message: '获取字段选项失败',
       error: error.message
     });
   }
 };
 
-// 创建选型字段
-exports.createOptionField = async (req, res) => {
+// 创建字段选项
+exports.createFieldOption = async (req, res) => {
   try {
-    console.log('=== 创建选型字段请求 ===');
-    console.log('req.user:', req.user);
-    console.log('req.body:', req.body);
-
     const {
       field_name,
       option_value,
       option_label,
       description,
+      color,
       sort_order,
       is_active
     } = req.body;
@@ -132,16 +169,15 @@ exports.createOptionField = async (req, res) => {
       option_value,
       option_label,
       description: description || null,
+      color: color || null,
       sort_order: sort_order !== undefined ? parseInt(sort_order) : 0,
       is_active: is_active !== undefined ? is_active : true,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
 
-    console.log('准备插入的数据:', JSON.stringify(insertData, null, 2));
-
     const { data, error } = await supabase
-      .from('ad_option_fields')
+      .from('field_options')
       .insert([insertData])
       .select()
       .single();
@@ -154,18 +190,18 @@ exports.createOptionField = async (req, res) => {
       message: '创建成功'
     });
   } catch (error) {
-    console.error('创建选型字段错误:', error);
+    console.error('创建字段选项错误:', error);
     res.status(400).json({
       success: false,
-      message: '创建选型字段失败',
+      message: '创建字段选项失败',
       error: error.message,
       details: error.details || error.hint || null
     });
   }
 };
 
-// 更新选型字段
-exports.updateOptionField = async (req, res) => {
+// 更新字段选项
+exports.updateFieldOption = async (req, res) => {
   try {
     const { id } = req.params;
     const updateData = { ...req.body };
@@ -183,7 +219,7 @@ exports.updateOptionField = async (req, res) => {
     }
 
     const { data, error } = await supabase
-      .from('ad_option_fields')
+      .from('field_options')
       .update(updateData)
       .eq('id', id)
       .select()
@@ -193,7 +229,7 @@ exports.updateOptionField = async (req, res) => {
       if (error.code === 'PGRST116') {
         return res.status(404).json({
           success: false,
-          message: '选型字段不存在'
+          message: '字段选项不存在'
         });
       }
       throw error;
@@ -207,19 +243,19 @@ exports.updateOptionField = async (req, res) => {
   } catch (error) {
     res.status(400).json({
       success: false,
-      message: '更新选型字段失败',
+      message: '更新字段选项失败',
       error: error.message
     });
   }
 };
 
-// 删除选型字段
-exports.deleteOptionField = async (req, res) => {
+// 删除字段选项
+exports.deleteFieldOption = async (req, res) => {
   try {
     const { id } = req.params;
 
     const { data, error } = await supabase
-      .from('ad_option_fields')
+      .from('field_options')
       .delete()
       .eq('id', id)
       .select()
@@ -229,7 +265,7 @@ exports.deleteOptionField = async (req, res) => {
       if (error.code === 'PGRST116') {
         return res.status(404).json({
           success: false,
-          message: '选型字段不存在'
+          message: '字段选项不存在'
         });
       }
       throw error;
@@ -243,14 +279,103 @@ exports.deleteOptionField = async (req, res) => {
   } catch (error) {
     res.status(400).json({
       success: false,
-      message: '删除选型字段失败',
+      message: '删除字段选项失败',
       error: error.message
     });
   }
 };
 
-// 批量删除选型字段
-exports.batchDeleteOptionFields = async (req, res) => {
+// 批量创建/更新字段选项
+exports.batchUpsertFieldOptions = async (req, res) => {
+  try {
+    const { field_name, options } = req.body;
+
+    if (!field_name) {
+      return res.status(400).json({
+        success: false,
+        message: 'field_name 为必填字段'
+      });
+    }
+
+    if (!options || !Array.isArray(options) || options.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'options 必须是非空数组'
+      });
+    }
+
+    let created = 0;
+    let updated = 0;
+    const results = [];
+
+    for (const option of options) {
+      if (option.id) {
+        // 更新现有选项
+        const updateData = {
+          ...option,
+          field_name,
+          updated_at: new Date().toISOString()
+        };
+        delete updateData.id;
+        delete updateData.created_at;
+
+        const { data, error } = await supabase
+          .from('field_options')
+          .update(updateData)
+          .eq('id', option.id)
+          .select()
+          .single();
+
+        if (error) throw error;
+        results.push(data);
+        updated++;
+      } else {
+        // 创建新选项
+        const insertData = {
+          field_name,
+          option_value: option.option_value,
+          option_label: option.option_label,
+          description: option.description || null,
+          sort_order: option.sort_order !== undefined ? parseInt(option.sort_order) : 0,
+          is_active: option.is_active !== undefined ? option.is_active : true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
+
+        const { data, error } = await supabase
+          .from('field_options')
+          .insert([insertData])
+          .select()
+          .single();
+
+        if (error) throw error;
+        results.push(data);
+        created++;
+      }
+    }
+
+    res.json({
+      success: true,
+      data: {
+        created,
+        updated,
+        total: created + updated,
+        options: results
+      },
+      message: '批量操作成功'
+    });
+  } catch (error) {
+    console.error('批量操作字段选项错误:', error);
+    res.status(400).json({
+      success: false,
+      message: '批量操作失败',
+      error: error.message
+    });
+  }
+};
+
+// 批量删除字段选项
+exports.batchDeleteFieldOptions = async (req, res) => {
   try {
     const { ids } = req.body;
 
@@ -262,7 +387,7 @@ exports.batchDeleteOptionFields = async (req, res) => {
     }
 
     const { data, error } = await supabase
-      .from('ad_option_fields')
+      .from('field_options')
       .delete()
       .in('id', ids)
       .select();
@@ -271,101 +396,15 @@ exports.batchDeleteOptionFields = async (req, res) => {
 
     res.json({
       success: true,
-      data: data,
+      data: {
+        deleted: data.length
+      },
       message: `成功删除 ${data.length} 条记录`
     });
   } catch (error) {
     res.status(400).json({
       success: false,
       message: '批量删除失败',
-      error: error.message
-    });
-  }
-};
-
-// 获取字段名列表（用于下拉选择）
-exports.getFieldNames = async (req, res) => {
-  try {
-    const { data, error } = await supabase
-      .from('ad_option_fields')
-      .select('field_name')
-      .order('field_name', { ascending: true });
-
-    if (error) throw error;
-
-    // 去重
-    const uniqueFieldNames = [...new Set(data.map(item => item.field_name))];
-
-    res.json({
-      success: true,
-      data: uniqueFieldNames,
-      message: '获取成功'
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: '获取字段名列表失败',
-      error: error.message
-    });
-  }
-};
-
-// 获取树形结构数据
-exports.getOptionFieldsTree = async (req, res) => {
-  try {
-    const { is_active } = req.query;
-
-    let query = supabase
-      .from('ad_option_fields')
-      .select('*')
-      .order('field_name', { ascending: true })
-      .order('sort_order', { ascending: true });
-
-    // 筛选条件
-    if (is_active !== undefined) {
-      query = query.eq('is_active', is_active === 'true');
-    }
-
-    const { data, error } = await query;
-
-    if (error) throw error;
-
-    // 转换为树形结构
-    const treeData = [];
-    const fieldMap = new Map();
-
-    data.forEach(item => {
-      if (!fieldMap.has(item.field_name)) {
-        const parentNode = {
-          key: item.field_name,
-          field_name: item.field_name,
-          title: item.field_name,
-          isParent: true,
-          children: []
-        };
-        fieldMap.set(item.field_name, parentNode);
-        treeData.push(parentNode);
-      }
-
-      const parent = fieldMap.get(item.field_name);
-      parent.children.push({
-        ...item,
-        key: item.id,
-        title: `${item.option_label} (${item.option_value})`,
-        isParent: false
-      });
-    });
-
-    res.json({
-      success: true,
-      data: treeData,
-      message: '获取成功'
-    });
-  } catch (error) {
-    console.error('获取树形数据错误:', error);
-    res.status(500).json({
-      success: false,
-      message: '获取树形数据失败',
       error: error.message
     });
   }
