@@ -15,6 +15,8 @@ const fieldGroupRoutes = require('./fieldGroups');
 const fieldDefinitionRoutes = require('./fieldDefinitions');
 const fieldOptionRoutes = require('./fieldOptions');
 const fieldConfigRoutes = require('./fieldConfig');
+const fbAdAccountRoutes = require('./fbAdAccounts');
+const companyRoutes = require('./companies');
 
 // 健康检查
 router.get('/health', apiController.healthCheck);
@@ -66,5 +68,11 @@ router.use('/field-options', fieldOptionRoutes);
 
 // 字段配置相关路由（树形结构、关联查询等）
 router.use('/field-config', fieldConfigRoutes);
+
+// Facebook 广告账户相关路由
+router.use('/fb-ad-accounts', fbAdAccountRoutes);
+
+// 公司主体相关路由
+router.use('/companies', companyRoutes);
 
 module.exports = router;
