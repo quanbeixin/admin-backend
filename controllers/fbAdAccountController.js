@@ -5,14 +5,27 @@ exports.getAllAccounts = async (req, res) => {
   try {
     const { data, error } = await supabase
       .from('fb_ad_accounts')
-      .select('*')
+      .select(`
+        *,
+        companies (
+          id,
+          name
+        )
+      `)
       .order('created_at', { ascending: false });
 
     if (error) throw error;
 
+    // 格式化数据，将 companies 对象展平
+    const formattedData = data.map(account => ({
+      ...account,
+      company_name: account.companies?.name || null,
+      companies: undefined // 移除嵌套的 companies 对象
+    }));
+
     res.json({
       success: true,
-      data: data
+      data: formattedData
     });
   } catch (error) {
     res.status(500).json({
@@ -29,15 +42,28 @@ exports.getAccountById = async (req, res) => {
     const { id } = req.params;
     const { data, error } = await supabase
       .from('fb_ad_accounts')
-      .select('*')
+      .select(`
+        *,
+        companies (
+          id,
+          name
+        )
+      `)
       .eq('id', id)
       .single();
 
     if (error) throw error;
 
+    // 格式化数据
+    const formattedData = {
+      ...data,
+      company_name: data.companies?.name || null,
+      companies: undefined
+    };
+
     res.json({
       success: true,
-      data: data
+      data: formattedData
     });
   } catch (error) {
     res.status(404).json({
@@ -51,7 +77,7 @@ exports.getAccountById = async (req, res) => {
 // 创建 Facebook 广告账户
 exports.createAccount = async (req, res) => {
   try {
-    const { access_token, status } = req.body;
+    const { company_id, account_id, account_name, access_token, status } = req.body;
 
     // 验证必填字段
     if (!access_token) {
@@ -67,17 +93,34 @@ exports.createAccount = async (req, res) => {
       updated_at: new Date().toISOString()
     };
 
+    if (company_id) accountData.company_id = company_id;
+    if (account_id) accountData.account_id = account_id;
+    if (account_name) accountData.account_name = account_name;
+
     const { data, error } = await supabase
       .from('fb_ad_accounts')
       .insert([accountData])
-      .select();
+      .select(`
+        *,
+        companies (
+          id,
+          name
+        )
+      `);
 
     if (error) throw error;
+
+    // 格式化返回数据
+    const formattedData = {
+      ...data[0],
+      company_name: data[0].companies?.name || null,
+      companies: undefined
+    };
 
     res.status(201).json({
       success: true,
       message: '账户创建成功',
-      data: data[0]
+      data: formattedData
     });
   } catch (error) {
     res.status(400).json({
@@ -92,12 +135,15 @@ exports.createAccount = async (req, res) => {
 exports.updateAccount = async (req, res) => {
   try {
     const { id } = req.params;
-    const { access_token, status } = req.body;
+    const { company_id, account_id, account_name, access_token, status } = req.body;
 
     const accountData = {
       updated_at: new Date().toISOString()
     };
 
+    if (company_id !== undefined) accountData.company_id = company_id;
+    if (account_id !== undefined) accountData.account_id = account_id;
+    if (account_name !== undefined) accountData.account_name = account_name;
     if (access_token !== undefined) accountData.access_token = access_token;
     if (status !== undefined) accountData.status = status;
 
@@ -105,7 +151,13 @@ exports.updateAccount = async (req, res) => {
       .from('fb_ad_accounts')
       .update(accountData)
       .eq('id', id)
-      .select();
+      .select(`
+        *,
+        companies (
+          id,
+          name
+        )
+      `);
 
     if (error) throw error;
 
@@ -116,10 +168,17 @@ exports.updateAccount = async (req, res) => {
       });
     }
 
+    // 格式化返回数据
+    const formattedData = {
+      ...data[0],
+      company_name: data[0].companies?.name || null,
+      companies: undefined
+    };
+
     res.json({
       success: true,
       message: '账户更新成功',
-      data: data[0]
+      data: formattedData
     });
   } catch (error) {
     res.status(400).json({
