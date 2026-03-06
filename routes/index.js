@@ -18,6 +18,7 @@ const fieldConfigRoutes = require('./fieldConfig');
 const fbAdAccountRoutes = require('./fbAdAccounts');
 const companyRoutes = require('./companies');
 const metaRoutes = require('./meta');
+const fbAdInsightsRoutes = require('./fbAdInsights');
 
 // 健康检查
 router.get('/health', apiController.healthCheck);
@@ -78,5 +79,8 @@ router.use('/companies', companyRoutes);
 
 // Meta 广告数据同步相关路由
 router.use('/meta', metaRoutes);
+
+// Facebook 广告投放数据相关路由
+router.use('/fb-ad-insights', fbAdInsightsRoutes);
 
 module.exports = router;

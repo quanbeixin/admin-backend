@@ -1,6 +1,6 @@
 const supabase = require('../config/supabase');
 
-// 获取广告数据（支持日期范围筛选）
+// 获取广告创意选题数据（支持日期范围筛选）- 从 ad_metrics 表读取
 exports.getAdReports = async (req, res) => {
   try {
     const { startDate, endDate, limit = 1000 } = req.query;
@@ -32,13 +32,13 @@ exports.getAdReports = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: '获取广告数据失败',
+      message: '获取广告创意选题数据失败',
       error: error.message
     });
   }
 };
 
-// 获取广告数据统计（按日期聚合）
+// 获取广告创意选题统计数据（按日期聚合）- 从 ad_metrics 表读取
 exports.getAdReportsStats = async (req, res) => {
   try {
     const { startDate, endDate, groupBy = 'report_date' } = req.query;
@@ -112,13 +112,13 @@ exports.getAdReportsStats = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: '获取广告统计数据失败',
+      message: '获取广告创意选题统计数据失败',
       error: error.message
     });
   }
 };
 
-// 获取广告活动列表
+// 获取广告创意选题活动列表 - 从 ad_metrics 表读取
 exports.getCampaigns = async (req, res) => {
   try {
     const { data, error } = await supabase
@@ -138,7 +138,7 @@ exports.getCampaigns = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: '获取广告活动列表失败',
+      message: '获取广告创意选题活动列表失败',
       error: error.message
     });
   }
