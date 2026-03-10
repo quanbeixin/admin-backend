@@ -6,3 +6,7 @@ node_modules/
 # SQL 文件
 *.sql
 sql/
+
+# 爬虫 session（含登录凭证，不提交）
+crawler/sessions/
+crawler/debug_*.png

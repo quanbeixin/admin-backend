@@ -19,6 +19,7 @@ const fbAdAccountRoutes = require('./fbAdAccounts');
 const companyRoutes = require('./companies');
 const metaRoutes = require('./meta');
 const fbAdInsightsRoutes = require('./fbAdInsights');
+const trendsRoutes = require('./trends');
 
 // 健康检查
 router.get('/health', apiController.healthCheck);
@@ -82,5 +83,8 @@ router.use('/meta', metaRoutes);
 
 // Facebook 广告投放数据相关路由
 router.use('/fb-ad-insights', fbAdInsightsRoutes);
+
+// 热门趋势相关路由
+router.use('/trends', trendsRoutes);
 
 module.exports = router;
