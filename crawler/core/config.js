@@ -32,4 +32,7 @@ midjourney: {
     proxy: process.env.TIKTOK_PROXY || process.env.PROXY_URL || null,
     maxItems: parseInt(process.env.TIKTOK_AI_MAX_ITEMS) || 30,
   },
+  google_trends_india: {
+    maxItems: parseInt(process.env.GOOGLE_TRENDS_MAX_ITEMS) || 20,
+  },
 };

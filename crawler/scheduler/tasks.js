@@ -7,6 +7,7 @@ const { generateHotTopics } = require('../core/hotTopics');
 const sources = [
   require('../sources/tiktok'),
   require('../sources/tiktok_ai'),
+  require('../sources/google_trends_india'),
 ];
 
 /**

@@ -20,6 +20,8 @@ const companyRoutes = require('./companies');
 const metaRoutes = require('./meta');
 const fbAdInsightsRoutes = require('./fbAdInsights');
 const trendsRoutes = require('./trends');
+const feedbackRoutes = require('./feedback');
+const webhookRoutes = require('./webhook');
 
 // 健康检查
 router.get('/health', apiController.healthCheck);
@@ -86,5 +88,11 @@ router.use('/fb-ad-insights', fbAdInsightsRoutes);
 
 // 热门趋势相关路由
 router.use('/trends', trendsRoutes);
+
+// 用户反馈相关路由
+router.use('/feedback', feedbackRoutes);
+
+// Webhook 相关路由（无需认证）
+router.use('/webhook', webhookRoutes);
 
 module.exports = router;
