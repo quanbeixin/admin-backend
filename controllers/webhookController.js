@@ -18,20 +18,20 @@ exports.receiveFeedback = async (req, res) => {
       status
     } = req.body;
 
-    // 验证必需字段
-    if (!user_email || !user_question) {
+    // 验证必需字段（只需要 user_question）
+    if (!user_question) {
       return res.status(400).json({
         success: false,
-        message: '缺少必需字段：user_email 和 user_question'
+        message: '缺少必需字段：user_question'
       });
     }
 
     // 构造反馈数据
     const feedbackData = {
       date: date || new Date().toISOString(),
-      user_email,
+      user_email: user_email || 'anonymous@form.com',  // 允许匿名提交
       product: product || '未指定',
-      channel: channel || 'Webhook',
+      channel: channel || 'Google Form',
       user_question,
       user_request: user_request || null,
       issue_type: '待分类',
