@@ -1,6 +1,36 @@
 const supabase = require('../config/supabase');
 const jwt = require('jsonwebtoken');
 
+// 获取当前登录用户信息
+exports.getCurrentUser = async (req, res) => {
+  try {
+    // req.user 是从 JWT token 中解析出来的
+    const { id } = req.user;
+
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error) throw error;
+
+    // 不返回密码
+    const { password: _, ...userInfo } = data;
+
+    res.json({
+      success: true,
+      data: userInfo
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: '获取用户信息失败',
+      error: error.message
+    });
+  }
+};
+
 // 获取所有用户
 exports.getAllUsers = async (req, res) => {
   try {

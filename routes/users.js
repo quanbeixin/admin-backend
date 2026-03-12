@@ -10,6 +10,9 @@ router.post('/login', userController.login);
 router.post('/register', userController.register);
 
 // 以下接口需要 JWT 验证
+// 获取当前登录用户信息
+router.get('/current', verifyToken, userController.getCurrentUser);
+
 // 获取所有用户
 router.get('/', verifyToken, userController.getAllUsers);
 
