@@ -22,6 +22,7 @@ const fbAdInsightsRoutes = require('./fbAdInsights');
 const trendsRoutes = require('./trends');
 const feedbackRoutes = require('./feedback');
 const webhookRoutes = require('./webhook');
+const feishuRoutes = require('./feishu');
 
 // 健康检查
 router.get('/health', apiController.healthCheck);
@@ -94,5 +95,8 @@ router.use('/feedback', feedbackRoutes);
 
 // Webhook 相关路由（无需认证）
 router.use('/webhook', webhookRoutes);
+
+// 飞书消息相关路由
+router.use('/feishu', feishuRoutes);
 
 module.exports = router;
