@@ -8,48 +8,87 @@ const client = new OpenAI({
 });
 
 /**
+ * 获取 AI Prompt 配置
+ */
+async function getPromptConfig() {
+  try {
+    const { data, error } = await supabase
+      .from('ai_config')
+      .select('*')
+      .eq('config_type', 'prompt')
+      .single();
+
+    if (error && error.code !== 'PGRST116') {
+      throw error;
+    }
+
+    // 如果没有配置，返回默认值
+    if (!data) {
+      return {
+        systemPrompt: '你是一位专业且富有同理心的客服专员，擅长理解用户情绪、分析问题本质，并给出温暖、专业的回复。',
+        knowledgeBase: '',
+        categories: '会员订阅,功能反馈,账户问题',
+        replyStyle: '语气亲切自然，像朋友聊天一样。表达同理心，理解用户的困扰。',
+        limitations: '回复必须基于知识库内容。用户需求要简练（6字以内）。'
+      };
+    }
+
+    return data.config_value;
+  } catch (error) {
+    console.error('获取 Prompt 配置失败:', error);
+    // 返回默认配置
+    return {
+      systemPrompt: '你是一位专业且富有同理心的客服专员。',
+      knowledgeBase: '',
+      categories: '会员订阅,功能反馈,账户问题',
+      replyStyle: '语气亲切自然。',
+      limitations: '回复必须基于知识库内容。'
+    };
+  }
+}
+
+/**
  * 分析单条反馈
  * @param {Object} feedback - 反馈记录
  * @returns {Object} 分析结果
  */
 async function analyzeFeedback(feedback) {
-  const prompt = `# 角色
-你是一位专业且富有同理心的客服专员，擅长理解用户情绪、分析问题本质，并给出温暖、专业的回复。
+  // 获取配置
+  const config = await getPromptConfig();
 
-## 技能
-1. 仔细研读用户问题，从知识库中找到对应的解决策略
-2. 用温暖、自然的语气回复用户，避免生硬的模板化表达
-3. 能准确将用户问题翻译成中文，并将回复翻译成地道的英文
-4. 精准提取用户需求，判断是否为新需求
-5. 对问题进行精准分类
+  // 查询历史类似问题
+  const { data: historicalFeedback } = await supabase
+    .from('feedback')
+    .select('user_question, user_question_cn, ai_category, user_request')
+    .not('ai_processed', 'is', null)
+    .eq('ai_processed', true)
+    .limit(50);
+
+  // 构建历史问题列表
+  let historicalContext = '';
+  if (historicalFeedback && historicalFeedback.length > 0) {
+    historicalContext = '\n## 历史问题参考\n以下是之前处理过的类似问题，用于判断是否为新问题：\n';
+    historicalFeedback.forEach((item, index) => {
+      if (item.user_question_cn || item.user_question) {
+        historicalContext += `${index + 1}. ${item.user_question_cn || item.user_question} - 分类：${item.ai_category || '未分类'}\n`;
+      }
+    });
+  }
+
+  const prompt = `# 角色
+${config.systemPrompt}
 
 ## 回复风格要求
-- 语气亲切自然，像朋友聊天一样
-- 表达同理心，理解用户的困扰
-- 避免"您好"、"感谢您的理解"等过于正式的套话
-- 用简洁、口语化的表达
-- 如果是问题，先表示理解，再给出解决方案
-- 如果是建议，表示感谢并说明后续处理
+${config.replyStyle}
 
 ## 知识库
-为什么我的账号被封禁了？账户被停用 - 抱歉给您带来困扰。频繁注销账户会被系统标记为违规，导致设备永久封禁。不过您可以换个设备重新登录，就能正常使用了。
-我只注销过一次，请求重新审核设备封禁 - 非常抱歉，设备封禁暂时无法解除。建议您换个设备重新注册，就可以继续使用啦。
-如何注销/删除账户 - 进入 Profile → 点左上角图标 → others → Delete Account 就可以了。提醒一下，多次注销会导致设备封禁哦。
-无法登录，谷歌登录提示无法读取空对象属性 - 麻烦提供一下您的注册邮箱，我帮您查查账号状态。
-如何切换账号 - 很简单：进入主页 → 点左上角图标 → 菜单最下方就能看到"切换账号"。
-如何登出账号 - 目前暂时没有登出选项。方便说说您想登出的原因吗？我们会根据反馈优化功能。
-如何更改绑定邮箱/手机号 - 抱歉，暂时不支持换绑。如果原手机号停用了，可以提供注册邮箱联系我们处理。
-游客模式想清空设备上所有生成记录/服务器数据 - 先绑定新邮箱，然后删除账户就行。删除后有7天冷静期，期间还能通过邮箱找回。
-如何购买会员 - 两种方式：1) Profile → Subscribe → 选时长付款；2) Discover 页面 → 点顶部闪电图标 → Subscribe Premium。
-会员可以享受哪些权益 - 会员可以享受每日积分、无水印、免排队生图、图片增强、无限使用20万+过滤器。后续还会有更多专属功能上线。
-退款相关？您好，非常抱歉，当前暂不支持退款。本应用会员服务是“基于订阅的”只有在您积极同意订阅条款后，系统才会定期向您收费。但您可立即通过谷歌商店关闭订阅，避免后续扣款。感谢您的理解与支持！
+${config.knowledgeBase}
+${historicalContext}
 
 ## 限制
-- 回复必须基于知识库内容
-- 用户需求要简练（6字以内），判断是否为新需求
-- 知识库能解决的都不算新需求
-- 知识库没有的，回复"这个问题需要人工处理，我们会尽快联系您"
-- 问题分类优先从这些选：会员订阅-未激活,会员订阅-取消订阅,会员订阅-要求退款,功能反馈-无法生成,功能反馈-无法打开,数据安全,封禁申诉,删除账户,登录账户
+${config.limitations}
+- 问题分类优先从这些选：${config.categories}
+- 判断是否为新问题：如果知识库中有类似问题的解决方案，或者历史问题参考中有相同/类似的问题，则 is_new_request 为 false；否则为 true
 
 ## 用户反馈内容
 ${feedback.user_question}
@@ -57,13 +96,13 @@ ${feedback.user_question}
 ## 输出要求
 返回JSON格式（不要有其他文字）：
 {
-  "ai_category": "会员订阅 | 功能反馈 | 账户问题",
-  "ai_sentiment": "Positive | Neutral | Negative",
-  "ai_reply": "温暖自然的中文回复（50字内，口语化）",
-  "ai_reply_en": "地道的英文回复",
-  "user_request": "用户需求（6字内）",
-  "is_new_request": true或false,
-  "user_question_cn": "如果用户问题是英文，翻译成中文；如果已经是中文，直接返回原文"
+  “ai_category”: “会员订阅 | 功能反馈 | 账户问题”,
+  “ai_sentiment”: “Positive | Neutral | Negative”,
+  “ai_reply”: “温暖自然的中文回复（50字内，口语化）”,
+  “ai_reply_en”: “地道的英文回复”,
+  “user_request”: “用户需求（6字内）”,
+  “is_new_request”: true或false,
+  “user_question_cn”: “如果用户问题是英文，翻译成中文；如果已经是中文，直接返回原文”
 }`;
 
   // 重试逻辑

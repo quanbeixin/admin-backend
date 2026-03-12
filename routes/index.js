@@ -23,6 +23,7 @@ const trendsRoutes = require('./trends');
 const feedbackRoutes = require('./feedback');
 const webhookRoutes = require('./webhook');
 const feishuRoutes = require('./feishu');
+const aiConfigRoutes = require('./aiConfig');
 
 // 健康检查
 router.get('/health', apiController.healthCheck);
@@ -98,5 +99,8 @@ router.use('/webhook', webhookRoutes);
 
 // 飞书消息相关路由
 router.use('/feishu', feishuRoutes);
+
+// AI 配置相关路由
+router.use('/ai-config', aiConfigRoutes);
 
 module.exports = router;
