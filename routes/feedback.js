@@ -25,6 +25,9 @@ router.patch('/:id/status', verifyToken, feedbackController.updateFeedbackStatus
 // 批量更新状态
 router.post('/batch/status', verifyToken, feedbackController.batchUpdateStatus);
 
+// 批量导入反馈
+router.post('/batch/import', verifyToken, feedbackController.batchImport);
+
 // AI 分析未处理的反馈
 router.post('/analyze/unprocessed', verifyToken, feedbackController.analyzeUnprocessed);
 

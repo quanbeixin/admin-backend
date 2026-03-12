@@ -186,6 +186,39 @@ exports.batchUpdateStatus = async (req, res) => {
   }
 };
 
+// 批量导入反馈
+exports.batchImport = async (req, res) => {
+  try {
+    const feedbackList = req.body;
+
+    if (!Array.isArray(feedbackList) || feedbackList.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: '导入数据不能为空'
+      });
+    }
+
+    const { data, error } = await supabase
+      .from('feedback')
+      .insert(feedbackList)
+      .select();
+
+    if (error) throw error;
+
+    res.json({
+      success: true,
+      message: `成功导入 ${data.length} 条数据`,
+      data: data
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: '批量导入失败',
+      error: error.message
+    });
+  }
+};
+
 // AI 分析未处理的反馈
 exports.analyzeUnprocessed = async (req, res) => {
   try {
