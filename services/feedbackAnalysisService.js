@@ -151,8 +151,6 @@ async function analyzeUnprocessedFeedback(limit = 10) {
     // 逐条分析
     for (const feedback of feedbackList) {
       try {
-        console.log(`正在分析反馈 ID: ${feedback.id}`);
-
         // 调用 Claude 分析
         const analysis = await analyzeFeedback(feedback);
 
@@ -181,8 +179,6 @@ async function analyzeUnprocessedFeedback(limit = 10) {
           status: 'success',
           analysis
         });
-
-        console.log(`反馈 ID ${feedback.id} 分析完成`);
 
         // 避免 API 限流，每次请求间隔 2 秒
         await new Promise(resolve => setTimeout(resolve, 2000));
