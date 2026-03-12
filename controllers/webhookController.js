@@ -55,7 +55,7 @@ exports.receiveFeedback = async (req, res) => {
     // 可选：自动触发 AI 分析（异步，不阻塞响应）
     if (process.env.AUTO_AI_ANALYSIS === 'true') {
       analyzeSingleFeedback(data.id).catch(err => {
-        console.error('自动 AI 分析失败:', err);
+        console.error('自动 AI 分析失败:', err.message);
       });
     }
 
