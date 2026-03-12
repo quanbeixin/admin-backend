@@ -62,7 +62,8 @@ ${feedback.user_question}
   "ai_reply": "温暖自然的中文回复（50字内，口语化）",
   "ai_reply_en": "地道的英文回复",
   "user_request": "用户需求（6字内）",
-  "is_new_request": true或false
+  "is_new_request": true或false,
+  "user_question_cn": "如果用户问题是英文，翻译成中文；如果已经是中文，直接返回原文"
 }`;
 
   // 重试逻辑
@@ -243,6 +244,7 @@ async function analyzeSingleFeedback(feedbackId) {
         ai_reply_en: analysis.ai_reply_en || null,
         user_request: analysis.user_request || null,
         is_new_request: analysis.is_new_request || false,
+        user_question_cn: analysis.user_question_cn || null,
         ai_processed: true,
         updated_at: new Date().toISOString()
       })
