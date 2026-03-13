@@ -53,10 +53,20 @@ exports.receiveFeedback = async (req, res) => {
     }
 
     // 可选：自动触发 AI 分析（异步，不阻塞响应）
+    console.log('AUTO_AI_ANALYSIS 环境变量:', process.env.AUTO_AI_ANALYSIS);
+    console.log('是否触发自动分析:', process.env.AUTO_AI_ANALYSIS === 'true');
+
     if (process.env.AUTO_AI_ANALYSIS === 'true') {
-      analyzeSingleFeedback(data.id).catch(err => {
-        console.error('自动 AI 分析失败:', err.message);
-      });
+      console.log('开始自动 AI 分析，反馈 ID:', data.id);
+      analyzeSingleFeedback(data.id)
+        .then(() => {
+          console.log('自动 AI 分析成功，反馈 ID:', data.id);
+        })
+        .catch(err => {
+          console.error('自动 AI 分析失败，反馈 ID:', data.id, '错误:', err.message);
+        });
+    } else {
+      console.log('自动 AI 分析未启用');
     }
 
     res.status(201).json({
