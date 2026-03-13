@@ -53,16 +53,24 @@ async function getPromptConfig() {
  * @returns {Object} 分析结果
  */
 async function analyzeFeedback(feedback) {
+  const startTime = Date.now();
+
   // 获取配置
+  console.log('[性能] 开始获取配置...');
+  const configStart = Date.now();
   const config = await getPromptConfig();
+  console.log(`[性能] 获取配置完成，耗时: ${Date.now() - configStart}ms`);
 
   // 查询历史类似问题
+  console.log('[性能] 开始查询历史数据...');
+  const historyStart = Date.now();
   const { data: historicalFeedback } = await supabase
     .from('feedback')
     .select('user_question, user_question_cn, ai_category, user_request')
     .not('ai_processed', 'is', null)
     .eq('ai_processed', true)
     .limit(50);
+  console.log(`[性能] 查询历史数据完成，耗时: ${Date.now() - historyStart}ms`);
 
   // 构建历史问题列表
   let historicalContext = '';
@@ -109,6 +117,9 @@ ${feedback.user_question}
   let retries = 3;
   let lastError;
 
+  console.log('[性能] 开始调用 DeepSeek API...');
+  const apiStart = Date.now();
+
   while (retries > 0) {
     try {
       const completion = await client.chat.completions.create({
@@ -122,6 +133,8 @@ ${feedback.user_question}
         temperature: 0.7,
         max_tokens: 1024
       });
+
+      console.log(`[性能] DeepSeek API 调用成功，耗时: ${Date.now() - apiStart}ms`);
 
       // 提取响应文本
       const responseText = completion.choices[0].message.content;
@@ -139,6 +152,7 @@ ${feedback.user_question}
       throw new Error('分析结果缺少必需字段');
     }
 
+    console.log(`[性能] 整个分析流程完成，总耗时: ${Date.now() - startTime}ms`);
     return analysis;
 
     } catch (error) {
@@ -146,14 +160,15 @@ ${feedback.user_question}
       retries--;
 
       if (retries > 0) {
-        console.log(`请求失败，剩余重试次数: ${retries}，等待 3 秒后重试...`);
+        console.log(`[性能] 请求失败，剩余重试次数: ${retries}，等待 3 秒后重试...`);
         await new Promise(resolve => setTimeout(resolve, 3000));
       }
     }
   }
 
   // 所有重试都失败
-  console.error('DeepSeek API 调用失败（已重试 3 次）:', lastError);
+  console.error('[性能] DeepSeek API 调用失败（已重试 3 次），总耗时:', Date.now() - startTime, 'ms');
+  console.error('错误详情:', lastError);
   throw lastError;
 }
 
