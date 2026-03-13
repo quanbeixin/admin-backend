@@ -1,24 +1,29 @@
 const OpenAI = require('openai');
 const supabase = require('../config/supabase');
+const { HttpsProxyAgent } = require('https-proxy-agent');
+
+// 初始化代理（如果配置了）
+const proxyAgent = process.env.PROXY_URL
+  ? new HttpsProxyAgent(process.env.PROXY_URL)
+  : undefined;
 
 // 初始化 OpenAI 客户端（用于 DeepSeek）
 const client = new OpenAI({
   apiKey: process.env.DEEPSEEK_API_KEY || 'sk-placeholder',
   baseURL: 'https://api.deepseek.com',
+  httpAgent: proxyAgent,
+  timeout: 60000  // 60秒超时
 });
 
-// 配置缓存
+// 配置缓存（永久缓存，直到配置更新或服务重启）
 let configCache = null;
-let configCacheTime = 0;
-const CONFIG_CACHE_TTL = 5 * 60 * 1000; // 5分钟缓存
 
 /**
  * 获取 AI Prompt 配置
  */
 async function getPromptConfig() {
   // 检查缓存
-  const now = Date.now();
-  if (configCache && (now - configCacheTime) < CONFIG_CACHE_TTL) {
+  if (configCache) {
     console.log('[性能] 使用配置缓存');
     return configCache;
   }
@@ -47,7 +52,6 @@ async function getPromptConfig() {
       configCache = data.config_value;
     }
 
-    configCacheTime = now;
     return configCache;
   } catch (error) {
     console.error('获取 Prompt 配置失败:', error);
@@ -68,6 +72,14 @@ async function getPromptConfig() {
 }
 
 /**
+ * 清除配置缓存
+ */
+function clearConfigCache() {
+  configCache = null;
+  console.log('[缓存] AI 配置缓存已清除');
+}
+
+/**
  * 分析单条反馈
  * @param {Object} feedback - 反馈记录
  * @returns {Object} 分析结果
@@ -81,7 +93,7 @@ async function analyzeFeedback(feedback) {
   const config = await getPromptConfig();
   console.log(`[性能] 获取配置完成，耗时: ${Date.now() - configStart}ms`);
 
-  // 查询历史类似问题
+  // 查询历史类似问题（减少查询数量，提高速度）
   console.log('[性能] 开始查询历史数据...');
   const historyStart = Date.now();
   const { data: historicalFeedback } = await supabase
@@ -89,7 +101,7 @@ async function analyzeFeedback(feedback) {
     .select('user_question, user_question_cn, ai_category, user_request')
     .not('ai_processed', 'is', null)
     .eq('ai_processed', true)
-    .limit(50);
+    .limit(20);  // 从50减少到20，加快查询速度
   console.log(`[性能] 查询历史数据完成，耗时: ${Date.now() - historyStart}ms`);
 
   // 构建历史问题列表
@@ -151,7 +163,8 @@ ${feedback.user_question}
           }
         ],
         temperature: 0.7,
-        max_tokens: 1024
+        max_tokens: 512,  // 从1024减少到512，加快响应速度
+        timeout: 60000    // 设置60秒超时
       });
 
       console.log(`[性能] DeepSeek API 调用成功，耗时: ${Date.now() - apiStart}ms`);
@@ -354,5 +367,6 @@ async function analyzeSingleFeedback(feedbackId) {
 
 module.exports = {
   analyzeUnprocessedFeedback,
-  analyzeSingleFeedback
+  analyzeSingleFeedback,
+  clearConfigCache
 };

@@ -1,4 +1,5 @@
 const supabase = require('../config/supabase');
+const { clearConfigCache } = require('../services/feedbackAnalysisService');
 
 // 获取 AI Prompt 配置
 exports.getPromptConfig = async (req, res) => {
@@ -76,6 +77,9 @@ exports.updatePromptConfig = async (req, res) => {
     }
 
     if (result.error) throw result.error;
+
+    // 清除配置缓存，使新配置立即生效
+    clearConfigCache();
 
     res.json({
       success: true,
