@@ -255,6 +255,8 @@ async function analyzeUnprocessedFeedback(limit = 10) {
  */
 async function analyzeSingleFeedback(feedbackId) {
   try {
+    console.log('开始分析反馈，ID:', feedbackId);
+
     // 查询反馈
     const { data: feedback, error: fetchError } = await supabase
       .from('feedback')
@@ -263,17 +265,24 @@ async function analyzeSingleFeedback(feedbackId) {
       .single();
 
     if (fetchError) {
+      console.error('查询反馈失败:', fetchError);
       throw fetchError;
     }
 
     if (!feedback) {
+      console.error('反馈不存在，ID:', feedbackId);
       throw new Error('反馈不存在');
     }
 
+    console.log('反馈数据:', feedback.user_question);
+
     // 调用 Claude 分析
+    console.log('开始调用 AI 分析...');
     const analysis = await analyzeFeedback(feedback);
+    console.log('AI 分析完成:', analysis);
 
     // 更新数据库
+    console.log('开始更新数据库...');
     const { error: updateError } = await supabase
       .from('feedback')
       .update({
@@ -290,8 +299,11 @@ async function analyzeSingleFeedback(feedbackId) {
       .eq('id', feedbackId);
 
     if (updateError) {
+      console.error('更新数据库失败:', updateError);
       throw updateError;
     }
+
+    console.log('数据库更新成功，反馈 ID:', feedbackId);
 
     return {
       success: true,
@@ -300,7 +312,7 @@ async function analyzeSingleFeedback(feedbackId) {
     };
 
   } catch (error) {
-    console.error('单条分析失败:', error);
+    console.error('单条分析失败，反馈 ID:', feedbackId, '错误详情:', error);
     throw error;
   }
 }
