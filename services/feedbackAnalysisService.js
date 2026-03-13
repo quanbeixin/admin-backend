@@ -7,10 +7,22 @@ const client = new OpenAI({
   baseURL: 'https://api.deepseek.com',
 });
 
+// 配置缓存
+let configCache = null;
+let configCacheTime = 0;
+const CONFIG_CACHE_TTL = 5 * 60 * 1000; // 5分钟缓存
+
 /**
  * 获取 AI Prompt 配置
  */
 async function getPromptConfig() {
+  // 检查缓存
+  const now = Date.now();
+  if (configCache && (now - configCacheTime) < CONFIG_CACHE_TTL) {
+    console.log('[性能] 使用配置缓存');
+    return configCache;
+  }
+
   try {
     const { data, error } = await supabase
       .from('ai_config')
@@ -24,18 +36,26 @@ async function getPromptConfig() {
 
     // 如果没有配置，返回默认值
     if (!data) {
-      return {
+      configCache = {
         systemPrompt: '你是一位专业且富有同理心的客服专员，擅长理解用户情绪、分析问题本质，并给出温暖、专业的回复。',
         knowledgeBase: '',
         categories: '会员订阅,功能反馈,账户问题',
         replyStyle: '语气亲切自然，像朋友聊天一样。表达同理心，理解用户的困扰。',
         limitations: '回复必须基于知识库内容。用户需求要简练（6字以内）。'
       };
+    } else {
+      configCache = data.config_value;
     }
 
-    return data.config_value;
+    configCacheTime = now;
+    return configCache;
   } catch (error) {
     console.error('获取 Prompt 配置失败:', error);
+    // 如果有缓存，即使过期也返回
+    if (configCache) {
+      console.log('[性能] 使用过期缓存');
+      return configCache;
+    }
     // 返回默认配置
     return {
       systemPrompt: '你是一位专业且富有同理心的客服专员。',
