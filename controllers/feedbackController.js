@@ -1,15 +1,163 @@
 const supabase = require('../config/supabase');
 const { analyzeUnprocessedFeedback, analyzeSingleFeedback } = require('../services/feedbackAnalysisService');
 
-// 获取所有反馈
-exports.getAllFeedback = async (req, res) => {
-  try {
+const FEEDBACK_BATCH_SIZE = 1000;
+const DEFAULT_PAGE_SIZE = 20;
+const MAX_PAGE_SIZE = 100;
+
+function parseBoolean(value) {
+  if (value === 'true' || value === true) return true;
+  if (value === 'false' || value === false) return false;
+  return null;
+}
+
+function escapeSearchText(value) {
+  return String(value).replace(/[%_,()]/g, ' ').trim();
+}
+
+function applyFeedbackFilters(query, filters) {
+  const {
+    searchText,
+    product,
+    status,
+    isNewRequest,
+    aiCategory,
+    dateStart,
+    dateEnd
+  } = filters;
+
+  if (searchText) {
+    const escapedText = escapeSearchText(searchText);
+
+    if (escapedText) {
+      query = query.or([
+        `user_email.ilike.%${escapedText}%`,
+        `user_question.ilike.%${escapedText}%`,
+        `user_question_cn.ilike.%${escapedText}%`,
+        `ai_reply.ilike.%${escapedText}%`,
+        `ai_reply_en.ilike.%${escapedText}%`,
+        `product.ilike.%${escapedText}%`,
+        `ai_category.ilike.%${escapedText}%`
+      ].join(','));
+    }
+  }
+
+  if (product) {
+    query = query.eq('product', product);
+  }
+
+  if (status) {
+    query = query.eq('status', status);
+  }
+
+  if (typeof isNewRequest === 'boolean') {
+    query = query.eq('is_new_request', isNewRequest);
+  }
+
+  if (aiCategory) {
+    query = query.eq('ai_category', aiCategory);
+  }
+
+  if (dateStart) {
+    query = query.gte('date', dateStart);
+  }
+
+  if (dateEnd) {
+    query = query.lte('date', dateEnd);
+  }
+
+  return query;
+}
+
+function hasPagedQuery(query) {
+  return [
+    'page',
+    'pageSize',
+    'searchText',
+    'product',
+    'status',
+    'isNewRequest',
+    'aiCategory',
+    'dateStart',
+    'dateEnd'
+  ].some((key) => query[key] !== undefined);
+}
+
+async function fetchAllFeedback() {
+  const allFeedback = [];
+  let from = 0;
+
+  while (true) {
+    const to = from + FEEDBACK_BATCH_SIZE - 1;
     const { data, error } = await supabase
       .from('feedback')
       .select('*')
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .range(from, to);
 
     if (error) throw error;
+
+    if (!data || data.length === 0) {
+      break;
+    }
+
+    allFeedback.push(...data);
+
+    if (data.length < FEEDBACK_BATCH_SIZE) {
+      break;
+    }
+
+    from += FEEDBACK_BATCH_SIZE;
+  }
+
+  return allFeedback;
+}
+
+// 获取所有反馈
+exports.getAllFeedback = async (req, res) => {
+  try {
+    if (hasPagedQuery(req.query)) {
+      const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+      const pageSize = Math.min(
+        Math.max(parseInt(req.query.pageSize, 10) || DEFAULT_PAGE_SIZE, 1),
+        MAX_PAGE_SIZE
+      );
+      const from = (page - 1) * pageSize;
+      const to = from + pageSize - 1;
+      const isNewRequest = parseBoolean(req.query.isNewRequest);
+
+      let query = supabase
+        .from('feedback')
+        .select('*', { count: 'exact' });
+
+      query = applyFeedbackFilters(query, {
+        searchText: req.query.searchText,
+        product: req.query.product,
+        status: req.query.status,
+        isNewRequest,
+        aiCategory: req.query.aiCategory,
+        dateStart: req.query.dateStart,
+        dateEnd: req.query.dateEnd
+      });
+
+      const { data, error, count } = await query
+        .order('created_at', { ascending: false })
+        .range(from, to);
+
+      if (error) throw error;
+
+      return res.json({
+        success: true,
+        data: data || [],
+        pagination: {
+          total: count || 0,
+          page,
+          pageSize
+        }
+      });
+    }
+
+    const data = await fetchAllFeedback();
 
     res.json({
       success: true,
